@@ -10,6 +10,7 @@ import {
 } from 'obsidian';
 import { ThreadView, THREAD_VIEW_TYPE } from './views/ThreadView';
 import { getEditorClass } from './components/MarkdownEditor';
+import { ThreadGraph, buildGraph } from './graph';
 
 interface MyPluginSettings {
 	mySetting: string;
@@ -23,11 +24,19 @@ export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
 	MarkdownEditor: any = null;
 
+	// Thread graph for tracking prev/next relationships
+	graph: ThreadGraph = new ThreadGraph();
+
 	// Track file view modes: leafId => 'thread' | 'markdown'
 	fileModes: Record<string, string> = {};
 
 	async onload() {
 		await this.loadSettings();
+
+		// Build the thread graph on layout ready (after metadata cache is populated)
+		this.app.workspace.onLayoutReady(() => {
+			buildGraph(this.app, this.graph);
+		});
 
 		// Get the MarkdownEditor class from the app's embed registry
 		this.MarkdownEditor = getEditorClass(this.app);
