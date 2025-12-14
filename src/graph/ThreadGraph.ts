@@ -111,12 +111,26 @@ export class ThreadGraph {
     }
 
     /**
-     * Get reply chains: for each reply of a note, get its full thread chain
+     * Get chain starting from a specific note, walking forward only
+     * (Does not walk back to root like getFullThread)
+     */
+    getChainFromNote(startPath: string): string[] {
+        const chain: string[] = [startPath];
+        let current = this.getMainContinuation(startPath);
+        while (current) {
+            chain.push(current);
+            current = this.getMainContinuation(current);
+        }
+        return chain;
+    }
+
+    /**
+     * Get reply chains: for each reply of a note, get its chain (forward only)
      * Returns array of thread chains (each chain is array of paths)
      */
     getReplyChains(path: string): string[][] {
         const replies = this.getReplies(path);
-        return replies.map(replyPath => this.getFullThread(replyPath));
+        return replies.map(replyPath => this.getChainFromNote(replyPath));
     }
 
     /**
