@@ -10,6 +10,8 @@ export interface ThreadNode {
     path: string;
     /** Whether the file exists in the vault */
     resolved: boolean;
+    /** Whether this note is marked as main thread continuation */
+    isMainThread: boolean;
 }
 
 /**

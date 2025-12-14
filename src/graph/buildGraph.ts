@@ -57,6 +57,7 @@ export function buildGraph(app: App, graph: ThreadGraph): void {
     for (const file of markdownFiles) {
         const cache = app.metadataCache.getFileCache(file);
         const prevLink = extractPrevFromFrontmatter(cache?.frontmatter);
+        const isThread = cache?.frontmatter?.thread === true;
 
         if (prevLink) {
             // Clean the wikilink format
@@ -76,6 +77,9 @@ export function buildGraph(app: App, graph: ThreadGraph): void {
             // Note has no prev (start of a thread or standalone)
             graph.setPrev(file.path, null);
         }
+
+        // Set thread marker
+        graph.setIsMainThread(file.path, isThread);
     }
 
     // Build implied next edges
