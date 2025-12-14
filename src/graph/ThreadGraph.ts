@@ -98,6 +98,7 @@ export class ThreadGraph {
         // Find root
         const root = this.getThreadRoot(startPath);
 
+
         // Walk forward via main continuation
         const thread: string[] = [root];
         let current = this.getMainContinuation(root);
@@ -107,6 +108,15 @@ export class ThreadGraph {
         }
 
         return thread;
+    }
+
+    /**
+     * Get reply chains: for each reply of a note, get its full thread chain
+     * Returns array of thread chains (each chain is array of paths)
+     */
+    getReplyChains(path: string): string[][] {
+        const replies = this.getReplies(path);
+        return replies.map(replyPath => this.getFullThread(replyPath));
     }
 
     /**

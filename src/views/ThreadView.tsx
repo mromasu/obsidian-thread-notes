@@ -1,7 +1,8 @@
-import { TextFileView, WorkspaceLeaf, TFile } from 'obsidian';
+import { TextFileView, WorkspaceLeaf, TFile, App } from 'obsidian';
 import { createRoot, Root } from 'react-dom/client';
 import { ThreadContainer } from '../components/ThreadContainer';
 import type MyPlugin from '../main';
+import type { NoteContent, ThreadData, ThreadChain } from './types';
 
 export const THREAD_VIEW_TYPE = 'thread';
 
@@ -23,13 +24,31 @@ function extractFrontmatter(content: string): { frontmatter: string; body: strin
     return { frontmatter: '', body: content };
 }
 
+/**
+ * Load note content from a file path
+ */
+async function loadNoteContent(app: App, path: string): Promise<NoteContent | null> {
+    const file = app.vault.getAbstractFileByPath(path);
+    if (!(file instanceof TFile)) return null;
+
+    const content = await app.vault.read(file);
+    const { frontmatter, body } = extractFrontmatter(content);
+
+    return {
+        path,
+        frontmatter,
+        body,
+        ctime: file.stat.ctime,
+    };
+}
+
 export class ThreadView extends TextFileView {
     plugin: MyPlugin;
     root: Root | null = null;
     activeEditor: any = null;
 
-    // Store the YAML frontmatter separately from the editor content
-    private frontmatter: string = '';
+    // Store loaded thread data
+    private threadData: ThreadData | null = null;
 
     constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
         super(leaf);
@@ -62,7 +81,7 @@ export class ThreadView extends TextFileView {
             this.root = null;
         }
         this.activeEditor = null;
-        this.frontmatter = '';
+        this.threadData = null;
     }
 
     getViewData(): string {
@@ -70,26 +89,73 @@ export class ThreadView extends TextFileView {
     }
 
     setViewData(data: string, clear: boolean): void {
-        // Extract and store frontmatter, keep only body for editor
-        const { frontmatter, body } = extractFrontmatter(data);
-        this.frontmatter = frontmatter;
-        this.data = data; // Store full data for getViewData
+        this.data = data;
 
         if (clear) {
             this.activeEditor = null;
         }
 
-        // Render with body only (no frontmatter)
-        this.renderView(body);
+        // Load thread data and render
+        this.loadAndRender();
     }
 
     clear(): void {
         this.data = '';
-        this.frontmatter = '';
+        this.threadData = null;
     }
 
-    private renderView(bodyContent?: string): void {
-        if (!this.root) return;
+    /**
+     * Load thread data from graph and render
+     */
+    private async loadAndRender(): Promise<void> {
+        if (!this.file || !this.root) return;
+
+        const path = this.file.path;
+        const graph = this.plugin.graph;
+
+        // Get main thread chain
+        const mainChainPaths = graph.getFullThread(path);
+        const mainNotes = await Promise.all(
+            mainChainPaths.map(p => loadNoteContent(this.app, p))
+        );
+        const mainChain: ThreadChain = {
+            notes: mainNotes.filter((n): n is NoteContent => n !== null),
+        };
+
+        // Get reply chains for current note, sorted by ctime
+        const replyChainPaths = graph.getReplyChains(path);
+        const replyChains: ThreadChain[] = [];
+
+        for (const chainPaths of replyChainPaths) {
+            const notes = await Promise.all(
+                chainPaths.map(p => loadNoteContent(this.app, p))
+            );
+            const chain: ThreadChain = {
+                notes: notes.filter((n): n is NoteContent => n !== null),
+            };
+            if (chain.notes.length > 0) {
+                replyChains.push(chain);
+            }
+        }
+
+        // Sort reply chains by first note's ctime
+        replyChains.sort((a, b) => {
+            const ctimeA = a.notes[0]?.ctime ?? 0;
+            const ctimeB = b.notes[0]?.ctime ?? 0;
+            return ctimeA - ctimeB;
+        });
+
+        this.threadData = {
+            mainChain,
+            replyChains,
+            currentPath: path,
+        };
+
+        this.renderView();
+    }
+
+    private renderView(): void {
+        if (!this.root || !this.threadData) return;
 
         const context = {
             app: this.app,
@@ -97,27 +163,47 @@ export class ThreadView extends TextFileView {
             plugin: this.plugin,
         };
 
-        // Use provided body content, or extract from current data
-        const content = bodyContent !== undefined
-            ? bodyContent
-            : extractFrontmatter(this.data).body;
-
         this.root.render(
             <ThreadContainer
                 context={context}
-                content={content}
-                onContentChange={(content) => this.handleContentChange(content)}
+                threadData={this.threadData}
+                onContentChange={(body, filePath) => this.handleContentChange(body, filePath)}
             />
         );
     }
 
-    private handleContentChange(content: string): void {
-        // Reconstruct full data with frontmatter
-        const fullContent = this.frontmatter + content;
+    /**
+     * Handle content change from any editor
+     */
+    private async handleContentChange(body: string, filePath: string): Promise<void> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return;
 
-        if (this.data !== fullContent) {
+        // Find the note in our thread data to get its frontmatter
+        let frontmatter = '';
+        const allNotes = [
+            ...this.threadData?.mainChain.notes ?? [],
+            ...this.threadData?.replyChains.flatMap(c => c.notes) ?? [],
+        ];
+        const note = allNotes.find(n => n.path === filePath);
+        if (note) {
+            frontmatter = note.frontmatter;
+        }
+
+        // Reconstruct full content
+        const fullContent = frontmatter + body;
+
+        // Save to file
+        await this.app.vault.modify(file, fullContent);
+
+        // Update local data if this is the current file
+        if (filePath === this.file?.path) {
             this.data = fullContent;
-            this.requestSave();
+        }
+
+        // Update note content in threadData
+        if (note) {
+            note.body = body;
         }
     }
 }

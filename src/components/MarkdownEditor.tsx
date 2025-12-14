@@ -5,6 +5,8 @@ import { ThreadContext } from './context';
 
 interface MarkdownEditorProps {
     value: string;
+    filePath: string;
+    isCurrent?: boolean;
     onChange?: (value: string) => void;
 }
 
@@ -82,7 +84,7 @@ function getEditorAppProxy(view: any) {
     });
 }
 
-export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
+export function MarkdownEditor({ value, filePath, isCurrent, onChange }: MarkdownEditorProps) {
     const context = useContext(ThreadContext);
     const elRef = useRef<HTMLDivElement>(null);
     const editorRef = useRef<any>(null);
@@ -151,7 +153,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
             plugin.removeChild(editor);
             editorRef.current = null;
         };
-    }, []);
+    }, [filePath]); // Re-create editor when filePath changes
 
     // Update content when value prop changes (if needed)
     useEffect(() => {
@@ -163,5 +165,6 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
         }
     }, [value]);
 
-    return <div className="thread-markdown-editor" ref={elRef}></div>;
+    const className = `thread-markdown-editor${isCurrent ? ' is-current-note' : ''}`;
+    return <div className={className} data-path={filePath} ref={elRef}></div>;
 }
