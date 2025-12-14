@@ -1,7 +1,7 @@
 {
 	"id": "obsidian-thread-notes",
 	"name": "Threads",
-	"version": "0.0.2",
+	"version": "0.0.12",
 	"minAppVersion": "0.15.0",
 	"description": "A plugin for managing threaded notes in Obsidian.",
 	"author": "mromasu",
