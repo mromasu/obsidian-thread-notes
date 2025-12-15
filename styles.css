@@ -36,4 +36,5 @@
 
     box-shadow: var(--shadow-s);
     border: 1px solid var(--background-modifier-border);
+    z-index: 500;
 }
