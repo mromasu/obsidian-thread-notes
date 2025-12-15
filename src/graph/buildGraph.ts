@@ -2,6 +2,35 @@ import { App, TFile, CachedMetadata, FrontMatterCache } from 'obsidian';
 import { ThreadGraph } from './ThreadGraph';
 
 /**
+ * Extract a string value from a potentially complex frontmatter value
+ * Handles: strings, arrays (uses first), link objects
+ */
+function extractStringValue(value: any): string | null {
+    if (!value) return null;
+
+    // Handle array: recursively extract from first element
+    if (Array.isArray(value)) {
+        return extractStringValue(value[0]);
+    }
+
+    // Handle string directly
+    if (typeof value === 'string') {
+        return value;
+    }
+
+    // Handle link object (Obsidian sometimes parses links as objects)
+    if (typeof value === 'object') {
+        // Try common link object properties
+        if (value.path) return String(value.path);
+        if (value.link) return String(value.link);
+        // Fallback: try to stringify
+        return null;
+    }
+
+    return null;
+}
+
+/**
  * Extract the prev link from frontmatter
  * Handles both single link and array of links (uses first)
  */
@@ -12,19 +41,7 @@ function extractPrevFromFrontmatter(
         return null;
     }
 
-    const prev = frontmatter.prev;
-
-    // Handle array: use first element
-    if (Array.isArray(prev)) {
-        return prev[0] ?? null;
-    }
-
-    // Handle string (link format: [[NoteName]] or just NoteName)
-    if (typeof prev === 'string') {
-        return prev;
-    }
-
-    return null;
+    return extractStringValue(frontmatter.prev);
 }
 
 /**
@@ -33,7 +50,11 @@ function extractPrevFromFrontmatter(
  * [[path/to/NoteName]] → path/to/NoteName
  * [[NoteName|alias]] → NoteName
  */
-function cleanWikilink(link: string): string {
+function cleanWikilink(link: string | null): string {
+    if (!link || typeof link !== 'string') {
+        return '';
+    }
+
     // Remove [[ and ]]
     let cleaned = link.replace(/^\[\[/, '').replace(/\]\]$/, '');
 

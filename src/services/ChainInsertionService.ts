@@ -54,7 +54,8 @@ export class ChainInsertionService {
     constructor(
         private app: App,
         private graph: ThreadGraph,
-        private onGraphUpdate: () => void
+        private onGraphUpdate: () => void,
+        private getFolder: () => string
     ) { }
 
     /**
@@ -80,7 +81,20 @@ export class ChainInsertionService {
      */
     async createNote(context: InsertionContext): Promise<CreatedNote> {
         const title = generateNoteName();
-        const path = normalizePath(`${title}.md`);
+        const folder = this.getFolder();
+
+        // Ensure folder exists if specified
+        if (folder) {
+            const folderExists = this.app.vault.getAbstractFileByPath(folder);
+            if (!folderExists) {
+                await this.app.vault.createFolder(folder);
+            }
+        }
+
+        // Build path with folder prefix
+        const path = folder
+            ? normalizePath(`${folder}/${title}.md`)
+            : normalizePath(`${title}.md`);
 
         // Build frontmatter with prev link and thread marker
         const frontmatter = createFrontmatter({

@@ -7,6 +7,8 @@ import {
 	Setting,
 	ViewState,
 	WorkspaceLeaf,
+	TFolder,
+	AbstractInputSuggest,
 } from 'obsidian';
 import { ThreadView, THREAD_VIEW_TYPE } from './views/ThreadView';
 import { getEditorClass } from './components/MarkdownEditor';
@@ -19,13 +21,55 @@ interface MyPluginSettings {
 	enableChainInsertion: boolean;
 	/** Number of empty lines to trigger insertion */
 	insertionLineThreshold: number;
+	/** Folder for new notes created via chain insertion */
+	insertionFolder: string;
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
 	mySetting: 'default',
 	enableChainInsertion: true,
 	insertionLineThreshold: 5,
+	insertionFolder: '',
 };
+
+/**
+ * Folder suggestor for text input
+ */
+class FolderSuggest extends AbstractInputSuggest<TFolder> {
+	private inputEl: HTMLInputElement;
+
+	constructor(app: App, inputEl: HTMLInputElement) {
+		super(app, inputEl);
+		this.inputEl = inputEl;
+	}
+
+	getSuggestions(inputStr: string): TFolder[] {
+		const abstractFiles = this.app.vault.getAllLoadedFiles();
+		const folders: TFolder[] = [];
+		const lowerCaseInputStr = inputStr.toLowerCase();
+
+		abstractFiles.forEach((folder) => {
+			if (
+				folder instanceof TFolder &&
+				folder.path.toLowerCase().contains(lowerCaseInputStr)
+			) {
+				folders.push(folder);
+			}
+		});
+
+		return folders.slice(0, 20); // Limit suggestions
+	}
+
+	renderSuggestion(folder: TFolder, el: HTMLElement): void {
+		el.setText(folder.path || '/');
+	}
+
+	selectSuggestion(folder: TFolder): void {
+		this.inputEl.value = folder.path;
+		this.inputEl.trigger('input');
+		this.close();
+	}
+}
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
@@ -52,7 +96,8 @@ export default class MyPlugin extends Plugin {
 		this.insertionService = new ChainInsertionService(
 			this.app,
 			this.graph,
-			() => this.refreshActiveThreadViews()
+			() => this.refreshActiveThreadViews(),
+			() => this.settings.insertionFolder
 		);
 
 		// Get the MarkdownEditor class from the app's embed registry
@@ -296,6 +341,21 @@ class SampleSettingTab extends PluginSettingTab {
 					this.plugin.settings.insertionLineThreshold = value;
 					await this.plugin.saveSettings();
 				}));
+
+		new Setting(containerEl)
+			.setName('Notes folder')
+			.setDesc('Folder for new notes created via chain insertion (leave empty for vault root)')
+			.addText(text => {
+				text
+					.setPlaceholder('e.g., Threads')
+					.setValue(this.plugin.settings.insertionFolder)
+					.onChange(async (value) => {
+						this.plugin.settings.insertionFolder = value;
+						await this.plugin.saveSettings();
+					});
+				// Add folder suggestions
+				new FolderSuggest(this.app, text.inputEl);
+			});
 
 		containerEl.createEl('h2', { text: 'Other settings' });
 

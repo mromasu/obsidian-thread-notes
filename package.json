@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-thread-notes",
-	"version": "0.0.22",
+	"version": "0.0.23",
 	"description": "A plugin for managing threaded notes in Obsidian.",
 	"main": "main.js",
 	"scripts": {
