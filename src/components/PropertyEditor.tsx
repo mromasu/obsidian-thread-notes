@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PropertyInput } from './PropertyInput';
 import { Property, PropertyType, getDefaultValue } from './yamlUtils';
 
 interface PropertyEditorProps {
     properties: Property[];
     onChange: (properties: Property[]) => void;
+    /** External trigger counter to open add form (increment to trigger) */
+    triggerAddForm?: number;
+    /** Callback when add form is opened/closed */
+    onAddFormChange?: (isOpen: boolean) => void;
 }
 
 /**
@@ -58,8 +62,28 @@ function AddPropertyForm({
 /**
  * Main property editor component
  */
-export function PropertyEditor({ properties, onChange }: PropertyEditorProps) {
+export function PropertyEditor({
+    properties,
+    onChange,
+    triggerAddForm,
+    onAddFormChange,
+}: PropertyEditorProps) {
     const [isAdding, setIsAdding] = useState(false);
+    const [lastTrigger, setLastTrigger] = useState(0);
+
+    // React to external trigger to open add form (responds to counter increment)
+    useEffect(() => {
+        if (triggerAddForm && triggerAddForm > lastTrigger) {
+            setLastTrigger(triggerAddForm);
+            setIsAdding(true);
+            onAddFormChange?.(true);
+        }
+    }, [triggerAddForm]);
+
+    const handleSetIsAdding = (value: boolean) => {
+        setIsAdding(value);
+        onAddFormChange?.(value);
+    };
 
     const handlePropertyChange = (index: number, value: any) => {
         const newProperties = [...properties];
@@ -81,7 +105,7 @@ export function PropertyEditor({ properties, onChange }: PropertyEditorProps) {
     const handleAddProperty = (name: string, type: PropertyType) => {
         // Check if property already exists
         if (properties.some(p => p.name === name)) {
-            setIsAdding(false);
+            handleSetIsAdding(false);
             return;
         }
 
@@ -91,7 +115,7 @@ export function PropertyEditor({ properties, onChange }: PropertyEditorProps) {
             value: getDefaultValue(type),
         };
         onChange([...properties, newProperty]);
-        setIsAdding(false);
+        handleSetIsAdding(false);
     };
 
     return (
@@ -101,7 +125,7 @@ export function PropertyEditor({ properties, onChange }: PropertyEditorProps) {
                 <button
                     type="button"
                     className="property-add-button"
-                    onClick={() => setIsAdding(true)}
+                    onClick={() => handleSetIsAdding(true)}
                     title="Add property"
                 >
                     +
@@ -111,7 +135,7 @@ export function PropertyEditor({ properties, onChange }: PropertyEditorProps) {
             {isAdding && (
                 <AddPropertyForm
                     onAdd={handleAddProperty}
-                    onCancel={() => setIsAdding(false)}
+                    onCancel={() => handleSetIsAdding(false)}
                 />
             )}
 

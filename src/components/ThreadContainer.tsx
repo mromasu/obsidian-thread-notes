@@ -10,6 +10,10 @@ interface ThreadContainerProps {
     currentNoteProperties: Property[];
     onContentChange: (body: string, filePath: string) => void;
     onPropertiesChange: (properties: Property[]) => void;
+    /** Trigger counter to open add property form (increment to trigger) */
+    triggerAddPropertyForm?: number;
+    /** Callback when add form state changes */
+    onAddFormChange?: (isOpen: boolean) => void;
 }
 
 /**
@@ -45,6 +49,8 @@ export function ThreadContainer({
     currentNoteProperties,
     onContentChange,
     onPropertiesChange,
+    triggerAddPropertyForm,
+    onAddFormChange,
 }: ThreadContainerProps) {
     const hasReplies = threadData.replyChains.length > 0;
 
@@ -55,6 +61,8 @@ export function ThreadContainer({
                 <PropertyEditor
                     properties={currentNoteProperties}
                     onChange={onPropertiesChange}
+                    triggerAddForm={triggerAddPropertyForm}
+                    onAddFormChange={onAddFormChange}
                 />
 
                 {/* Main thread chain */}

@@ -1,7 +1,7 @@
 import { TextFileView, WorkspaceLeaf, TFile, App } from 'obsidian';
 import { createRoot, Root } from 'react-dom/client';
 import { ThreadContainer } from '../components/ThreadContainer';
-import { parseFrontmatter, serializeFrontmatter, Property } from '../components/yamlUtils';
+import { parseFrontmatter, serializeFrontmatter, Property, PropertyType } from '../components/yamlUtils';
 import type MyPlugin from '../main';
 import type { NoteContent, ThreadData, ThreadChain } from './types';
 
@@ -52,6 +52,8 @@ export class ThreadView extends TextFileView {
     private threadData: ThreadData | null = null;
     // Store current note properties
     private currentNoteProperties: Property[] = [];
+    // Counter for triggering add property form (increment to trigger)
+    private _triggerAddPropertyFormCounter: number = 0;
 
     constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
         super(leaf);
@@ -179,6 +181,10 @@ export class ThreadView extends TextFileView {
                 currentNoteProperties={this.currentNoteProperties}
                 onContentChange={(body, filePath) => this.handleContentChange(body, filePath)}
                 onPropertiesChange={(properties) => this.handlePropertiesChange(properties)}
+                triggerAddPropertyForm={this._triggerAddPropertyFormCounter}
+                onAddFormChange={() => {
+                    // No-op - counter-based trigger doesn't need reset
+                }}
             />
         );
     }
@@ -253,4 +259,57 @@ export class ThreadView extends TextFileView {
         // Re-render
         this.renderView();
     }
+
+    /**
+     * Toggle properties panel visibility
+     */
+    togglePropertiesVisibility(): void {
+        if (this.contentEl.hasClass('properties-hidden')) {
+            this.contentEl.removeClass('properties-hidden');
+        } else {
+            this.contentEl.addClass('properties-hidden');
+        }
+    }
+
+    /**
+     * Add a new property programmatically
+     */
+    addProperty(name: string, type: PropertyType, value: any): void {
+        // Check if property already exists
+        if (this.currentNoteProperties.some(p => p.name === name)) {
+            return;
+        }
+
+        this.currentNoteProperties.push({ name, type, value });
+        this.handlePropertiesChange(this.currentNoteProperties);
+    }
+
+    /**
+     * Get current properties
+     */
+    getProperties(): Property[] {
+        return this.currentNoteProperties;
+    }
+
+    /**
+     * Check if properties panel is visible
+     */
+    isPropertiesVisible(): boolean {
+        return !this.contentEl.hasClass('properties-hidden');
+    }
+
+    /**
+     * Open add property form (opens properties panel if hidden and triggers form)
+     */
+    triggerAddPropertyForm(): void {
+        // Ensure properties panel is visible
+        if (this.contentEl.hasClass('properties-hidden')) {
+            this.contentEl.removeClass('properties-hidden');
+        }
+
+        // Increment trigger counter and re-render
+        this._triggerAddPropertyFormCounter++;
+        this.renderView();
+    }
 }
+

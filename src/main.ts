@@ -74,6 +74,35 @@ export default class MyPlugin extends Plugin {
 			},
 		});
 
+		// Add command to toggle properties visibility
+		this.addCommand({
+			id: 'toggle-properties',
+			name: 'Toggle properties panel',
+			checkCallback: (checking: boolean) => {
+				const activeView = this.app.workspace.getActiveViewOfType(ThreadView);
+				if (!activeView) return false;
+
+				if (checking) return true;
+
+				activeView.togglePropertiesVisibility();
+			},
+		});
+
+		// Add command to add a new property
+		this.addCommand({
+			id: 'add-property',
+			name: 'Add property',
+			checkCallback: (checking: boolean) => {
+				const activeView = this.app.workspace.getActiveViewOfType(ThreadView);
+				if (!activeView) return false;
+
+				if (checking) return true;
+
+				// Trigger inline add form (opens properties panel if hidden)
+				activeView.triggerAddPropertyForm();
+			},
+		});
+
 		// Add settings tab
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 	}
