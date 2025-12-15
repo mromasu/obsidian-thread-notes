@@ -11,13 +11,20 @@ import {
 import { ThreadView, THREAD_VIEW_TYPE } from './views/ThreadView';
 import { getEditorClass } from './components/MarkdownEditor';
 import { ThreadGraph, buildGraph } from './graph';
+import { ChainInsertionService } from './services/ChainInsertionService';
 
 interface MyPluginSettings {
 	mySetting: string;
+	/** Enable chain insertion via empty lines */
+	enableChainInsertion: boolean;
+	/** Number of empty lines to trigger insertion */
+	insertionLineThreshold: number;
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+	mySetting: 'default',
+	enableChainInsertion: true,
+	insertionLineThreshold: 5,
 };
 
 export default class MyPlugin extends Plugin {
@@ -26,6 +33,9 @@ export default class MyPlugin extends Plugin {
 
 	// Thread graph for tracking prev/next relationships
 	graph: ThreadGraph = new ThreadGraph();
+
+	// Chain insertion service
+	insertionService: ChainInsertionService;
 
 	// Track file view modes: leafId => 'thread' | 'markdown'
 	fileModes: Record<string, string> = {};
@@ -37,6 +47,13 @@ export default class MyPlugin extends Plugin {
 		this.app.workspace.onLayoutReady(() => {
 			buildGraph(this.app, this.graph);
 		});
+
+		// Initialize chain insertion service
+		this.insertionService = new ChainInsertionService(
+			this.app,
+			this.graph,
+			() => this.refreshActiveThreadViews()
+		);
 
 		// Get the MarkdownEditor class from the app's embed registry
 		this.MarkdownEditor = getEditorClass(this.app);
@@ -229,6 +246,19 @@ export default class MyPlugin extends Plugin {
 			})
 		);
 	}
+
+	/**
+	 * Refresh all active Thread views after graph changes
+	 */
+	refreshActiveThreadViews() {
+		this.app.workspace.getLeavesOfType(THREAD_VIEW_TYPE).forEach((leaf) => {
+			const view = leaf.view;
+			if (view instanceof ThreadView && view.file) {
+				// Re-trigger the view to reload data
+				view.setViewData(view.data, false);
+			}
+		});
+	}
 }
 
 class SampleSettingTab extends PluginSettingTab {
@@ -242,6 +272,32 @@ class SampleSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
+
+		containerEl.createEl('h2', { text: 'Chain insertion' });
+
+		new Setting(containerEl)
+			.setName('Enable chain insertion')
+			.setDesc('Create new notes in the chain when entering empty lines at editor end')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.enableChainInsertion)
+				.onChange(async (value) => {
+					this.plugin.settings.enableChainInsertion = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Insertion trigger threshold')
+			.setDesc('Number of empty lines at end to trigger insertion (default: 5)')
+			.addSlider(slider => slider
+				.setLimits(3, 10, 1)
+				.setValue(this.plugin.settings.insertionLineThreshold)
+				.setDynamicTooltip()
+				.onChange(async (value) => {
+					this.plugin.settings.insertionLineThreshold = value;
+					await this.plugin.saveSettings();
+				}));
+
+		containerEl.createEl('h2', { text: 'Other settings' });
 
 		new Setting(containerEl)
 			.setName('Setting #1')

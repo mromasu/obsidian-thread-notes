@@ -2,6 +2,7 @@ import { EditorView, ViewUpdate } from '@codemirror/view';
 import { useContext, useEffect, useRef } from 'react';
 import { Platform } from 'obsidian';
 import { ThreadContext } from './context';
+import { createEmptyLineObserver } from '../observers/EmptyLineObserver';
 
 interface MarkdownEditorProps {
     value: string;
@@ -129,6 +130,20 @@ export function MarkdownEditor({ value, filePath, isCurrent, isBottom, onChange 
                         },
                     })
                 );
+
+                // Add empty line observer for chain insertion (only on bottom editor)
+                if (isBottom && plugin.settings.enableChainInsertion && plugin.insertionService) {
+                    extensions.push(
+                        createEmptyLineObserver({
+                            threshold: plugin.settings.insertionLineThreshold || 5,
+                            getFilePath: () => filePath,
+                            debounceMs: 300,
+                            onTrigger: (_editorView, path) => {
+                                plugin.insertionService.executeInsertion(path);
+                            },
+                        })
+                    );
+                }
 
                 return extensions;
             }
