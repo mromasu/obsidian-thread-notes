@@ -7,6 +7,7 @@ interface MarkdownEditorProps {
     value: string;
     filePath: string;
     isCurrent?: boolean;
+    isBottom?: boolean;
     onChange?: (value: string) => void;
 }
 
@@ -84,7 +85,7 @@ function getEditorAppProxy(view: any) {
     });
 }
 
-export function MarkdownEditor({ value, filePath, isCurrent, onChange }: MarkdownEditorProps) {
+export function MarkdownEditor({ value, filePath, isCurrent, isBottom, onChange }: MarkdownEditorProps) {
     const context = useContext(ThreadContext);
     const elRef = useRef<HTMLDivElement>(null);
     const editorRef = useRef<any>(null);
@@ -165,6 +166,6 @@ export function MarkdownEditor({ value, filePath, isCurrent, onChange }: Markdow
         }
     }, [value]);
 
-    const className = `thread-markdown-editor${isCurrent ? ' is-current-note' : ''}`;
+    const className = `thread-markdown-editor${isCurrent ? ' is-current-note' : ''}${isBottom ? ' is-bottom' : ''}`;
     return <div className={className} data-path={filePath} ref={elRef}></div>;
 }

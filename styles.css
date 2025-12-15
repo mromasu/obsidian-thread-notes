@@ -39,6 +39,10 @@
     z-index: 500;
 }
 
+.thread-markdown-editor.is-bottom {
+    margin-bottom: 40vh;
+}
+
 /*
  * Property Editor Styles
  */

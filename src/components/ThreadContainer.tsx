@@ -23,19 +23,23 @@ function ChainRenderer({
     chain,
     currentPath,
     onContentChange,
+    isLastChain,
 }: {
     chain: ThreadChain;
     currentPath: string;
     onContentChange: (body: string, filePath: string) => void;
+    isLastChain: boolean;
 }) {
+    const noteCount = chain.notes.length;
     return (
         <>
-            {chain.notes.map((note) => (
+            {chain.notes.map((note, index) => (
                 <MarkdownEditor
                     key={note.path}
                     value={note.body}
                     filePath={note.path}
                     isCurrent={note.path === currentPath}
+                    isBottom={isLastChain && index === noteCount - 1}
                     onChange={(value) => onContentChange(value, note.path)}
                 />
             ))}
@@ -72,6 +76,7 @@ export function ThreadContainer({
                         chain={threadData.mainChain}
                         currentPath={threadData.currentPath}
                         onContentChange={onContentChange}
+                        isLastChain={!hasReplies}
                     />
                 </div>
 
@@ -87,6 +92,7 @@ export function ThreadContainer({
                                     chain={chain}
                                     currentPath={threadData.currentPath}
                                     onContentChange={onContentChange}
+                                    isLastChain={index === threadData.replyChains.length - 1}
                                 />
                             </div>
                         ))}
