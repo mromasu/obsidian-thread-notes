@@ -63,6 +63,7 @@ export function ThreadContainer({
                     onChange={onPropertiesChange}
                     triggerAddForm={triggerAddPropertyForm}
                     onAddFormChange={onAddFormChange}
+                    app={context.app}
                 />
 
                 {/* Main thread chain */}

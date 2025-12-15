@@ -44,6 +44,7 @@
  */
 
 .property-editor {
+    width: 100%;
     margin: 20px auto;
     max-width: var(--file-line-width);
     max-height: 100vh;
@@ -115,6 +116,11 @@
 .property-name {
     min-width: 100px;
     max-width: 150px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    height: -webkit-fill-available;
 }
 
 .property-name-text {
@@ -290,4 +296,83 @@ button:not(.clickable-icon).pill-remove {
 .add-property-cancel {
     background: var(--background-modifier-border);
     color: var(--text-normal);
+}
+
+/* Property name wrapper for suggestions */
+.property-name-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+/* Property suggestions dropdown */
+.property-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 2px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    box-shadow: var(--shadow-s);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.property-suggestion {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    cursor: pointer;
+    gap: 8px;
+}
+
+.property-suggestion:hover,
+.property-suggestion.selected {
+    background: var(--background-modifier-hover);
+}
+
+.suggestion-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.suggestion-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.suggestion-name {
+    font-size: 13px;
+    color: var(--text-normal);
+    flex: 1;
+}
+
+.suggestion-type {
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 2px 6px;
+    background: var(--background-secondary);
+    border-radius: 3px;
+}
+
+/* Property type icon in property rows */
+.property-type-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-right: 6px;
+}
+
+.property-type-icon svg {
+    width: 16px;
+    height: 16px;
 }

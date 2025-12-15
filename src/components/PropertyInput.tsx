@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { setIcon } from 'obsidian';
 import type { Property, PropertyType } from './yamlUtils';
 
 interface PropertyInputProps {
@@ -6,6 +7,37 @@ interface PropertyInputProps {
     onChange: (value: any) => void;
     onDelete: () => void;
     onNameChange: (name: string) => void;
+}
+
+/**
+ * Get Lucide icon name for property type
+ */
+function getTypeIconName(type: PropertyType): string {
+    switch (type) {
+        case 'text': return 'text';
+        case 'number': return 'hash';
+        case 'checkbox': return 'check-square';
+        case 'date': return 'calendar';
+        case 'datetime': return 'clock';
+        case 'list': return 'list';
+        default: return 'text';
+    }
+}
+
+/**
+ * Icon component using Obsidian's setIcon
+ */
+function Icon({ name, className }: { name: string; className?: string }) {
+    const ref = useRef<HTMLSpanElement>(null);
+
+    useEffect(() => {
+        if (ref.current) {
+            ref.current.empty();
+            setIcon(ref.current, name);
+        }
+    }, [name]);
+
+    return <span ref={ref} className={className} />;
 }
 
 /**
@@ -173,6 +205,7 @@ export function PropertyInput({ property, onChange, onDelete, onNameChange }: Pr
     return (
         <div className="property-row">
             <div className="property-name">
+                <Icon name={getTypeIconName(property.type)} className="property-type-icon" />
                 {isEditingName ? (
                     <input
                         type="text"
