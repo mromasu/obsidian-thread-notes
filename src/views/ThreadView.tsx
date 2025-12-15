@@ -1,6 +1,7 @@
 import { TextFileView, WorkspaceLeaf, TFile, App } from 'obsidian';
 import { createRoot, Root } from 'react-dom/client';
 import { ThreadContainer } from '../components/ThreadContainer';
+import { parseFrontmatter, serializeFrontmatter, Property } from '../components/yamlUtils';
 import type MyPlugin from '../main';
 import type { NoteContent, ThreadData, ThreadChain } from './types';
 
@@ -49,6 +50,8 @@ export class ThreadView extends TextFileView {
 
     // Store loaded thread data
     private threadData: ThreadData | null = null;
+    // Store current note properties
+    private currentNoteProperties: Property[] = [];
 
     constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
         super(leaf);
@@ -82,6 +85,7 @@ export class ThreadView extends TextFileView {
         }
         this.activeEditor = null;
         this.threadData = null;
+        this.currentNoteProperties = [];
     }
 
     getViewData(): string {
@@ -95,6 +99,10 @@ export class ThreadView extends TextFileView {
             this.activeEditor = null;
         }
 
+        // Parse current note properties
+        const { frontmatter } = extractFrontmatter(data);
+        this.currentNoteProperties = parseFrontmatter(frontmatter);
+
         // Load thread data and render
         this.loadAndRender();
     }
@@ -102,6 +110,7 @@ export class ThreadView extends TextFileView {
     clear(): void {
         this.data = '';
         this.threadData = null;
+        this.currentNoteProperties = [];
     }
 
     /**
@@ -167,7 +176,9 @@ export class ThreadView extends TextFileView {
             <ThreadContainer
                 context={context}
                 threadData={this.threadData}
+                currentNoteProperties={this.currentNoteProperties}
                 onContentChange={(body, filePath) => this.handleContentChange(body, filePath)}
+                onPropertiesChange={(properties) => this.handlePropertiesChange(properties)}
             />
         );
     }
@@ -205,5 +216,41 @@ export class ThreadView extends TextFileView {
         if (note) {
             note.body = body;
         }
+    }
+
+    /**
+     * Handle properties change from PropertyEditor
+     */
+    private async handlePropertiesChange(properties: Property[]): Promise<void> {
+        if (!this.file) return;
+
+        // Update local properties
+        this.currentNoteProperties = properties;
+
+        // Get current body
+        const { body } = extractFrontmatter(this.data);
+
+        // Serialize new frontmatter
+        const newFrontmatter = serializeFrontmatter(properties);
+
+        // Reconstruct full content
+        const fullContent = newFrontmatter + body;
+
+        // Save to file
+        await this.app.vault.modify(this.file, fullContent);
+
+        // Update local data
+        this.data = fullContent;
+
+        // Update in threadData if current note is in there
+        const currentNote = this.threadData?.mainChain.notes.find(
+            n => n.path === this.file?.path
+        );
+        if (currentNote) {
+            currentNote.frontmatter = newFrontmatter;
+        }
+
+        // Re-render
+        this.renderView();
     }
 }

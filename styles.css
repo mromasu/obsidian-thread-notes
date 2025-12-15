@@ -38,3 +38,237 @@
     border: 1px solid var(--background-modifier-border);
     z-index: 500;
 }
+
+/*
+ * Property Editor Styles
+ */
+
+.property-editor {
+    margin: 20px auto;
+    max-width: var(--file-line-width);
+    padding: 16px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+}
+
+.property-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.property-editor-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.property-add-button {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.property-add-button:hover {
+    background: var(--interactive-accent-hover);
+}
+
+.property-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.property-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.property-name {
+    min-width: 100px;
+    max-width: 150px;
+}
+
+.property-name-text {
+    display: inline-block;
+    padding: 4px 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.property-name-text:hover {
+    background: var(--background-modifier-hover);
+}
+
+.property-name-input {
+    width: 100%;
+    padding: 4px 8px;
+    font-size: 13px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-primary);
+}
+
+.property-value {
+    flex: 1;
+    min-width: 0;
+}
+
+.property-input {
+    width: 100%;
+    padding: 4px 8px;
+    font-size: 13px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-primary);
+}
+
+.property-input:focus {
+    outline: none;
+    border-color: var(--interactive-accent);
+}
+
+.property-checkbox {
+    width: auto;
+    margin: 4px 0;
+}
+
+.property-delete {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 4px;
+    opacity: 0.5;
+}
+
+.property-delete:hover {
+    background: var(--background-modifier-error);
+    color: var(--text-on-accent);
+    opacity: 1;
+}
+
+.property-empty {
+    padding: 12px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* List/Tag input styles */
+.property-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.property-input.property-list {
+    padding: 4px;
+}
+
+.list-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+
+.list-item-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.pill-remove {
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    font-size: 14px;
+    line-height: 1;
+    opacity: 0.7;
+}
+
+.pill-remove:hover {
+    opacity: 1;
+}
+
+.list-input {
+    flex: 1;
+    min-width: 80px;
+    border: none;
+    background: transparent;
+    padding: 2px 4px;
+    font-size: 13px;
+}
+
+.list-input:focus {
+    outline: none;
+}
+
+/* Add property form */
+.add-property-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 8px;
+    background: var(--background-secondary);
+    border-radius: 4px;
+}
+
+.add-property-name {
+    flex: 1;
+    padding: 4px 8px;
+    font-size: 13px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+}
+
+.add-property-type {
+    padding: 4px 8px;
+    font-size: 13px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-primary);
+}
+
+.add-property-submit,
+.add-property-cancel {
+    padding: 4px 12px;
+    font-size: 13px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.add-property-submit {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.add-property-cancel {
+    background: var(--background-modifier-border);
+    color: var(--text-normal);
+}

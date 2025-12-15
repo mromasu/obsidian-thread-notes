@@ -1,11 +1,15 @@
 import { ThreadContext, ThreadContextValue } from './context';
 import { MarkdownEditor } from './MarkdownEditor';
+import { PropertyEditor } from './PropertyEditor';
+import type { Property } from './yamlUtils';
 import type { ThreadData, ThreadChain, NoteContent } from '../views/types';
 
 interface ThreadContainerProps {
     context: ThreadContextValue;
     threadData: ThreadData;
+    currentNoteProperties: Property[];
     onContentChange: (body: string, filePath: string) => void;
+    onPropertiesChange: (properties: Property[]) => void;
 }
 
 /**
@@ -35,12 +39,24 @@ function ChainRenderer({
     );
 }
 
-export function ThreadContainer({ context, threadData, onContentChange }: ThreadContainerProps) {
+export function ThreadContainer({
+    context,
+    threadData,
+    currentNoteProperties,
+    onContentChange,
+    onPropertiesChange,
+}: ThreadContainerProps) {
     const hasReplies = threadData.replyChains.length > 0;
 
     return (
         <ThreadContext.Provider value={context}>
             <div className="thread-view-container">
+                {/* Property editor for current note */}
+                <PropertyEditor
+                    properties={currentNoteProperties}
+                    onChange={onPropertiesChange}
+                />
+
                 {/* Main thread chain */}
                 <div className="main-thread-chain">
                     <ChainRenderer
@@ -71,3 +87,4 @@ export function ThreadContainer({ context, threadData, onContentChange }: Thread
         </ThreadContext.Provider>
     );
 }
+
